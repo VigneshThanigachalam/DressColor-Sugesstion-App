@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import ImageUploader from "react-image-upload";
 import { useState } from "react";
 import { MetaData } from "./MetaData";
@@ -11,24 +11,30 @@ import { toast } from "react-toastify";
 import { useCookies } from "react-cookie";
 import axios from "axios";
 
-export const AddDress = ({setsaved}) => {
+export const AddDress = ({ setsaved }) => {
   const navigate = useNavigate();
   const base_url = process.env.REACT_APP_BASE_URL;
   const { category } = useParams();
   const [upload, setUpload] = useState();
   const [uploadAcc, setUploadAcc] = useState();
   const dressTypeArr = ["saree", "salwar"];
-  const colorArr = ["white", "green", "red"];
+  const [colorArr, setcolorArr] = useState();
   const [dressImage, setdressImage] = useState();
   const [accImage, setaccImage] = useState();
   const [cookie, setCookie] = useCookies(["refreshToken"]);
+  const colorSuggestion = {
+    light: ["baby blue", "light pink", "lavender", "pale yellow", "lighter beige", "heather gray"],
+    fair: ["deep purple", "ruby red", "mustard yellow", "dull orange", "red", "dark pink", "icy aqua", "silver"],
+    medium: ["rich browns", "orange-yellow", "olive green", "deep reds", "purple"],
+    deep: ["black", "charcoal gray", "navy", "emerald green", "sapphire blue", "royal purple"]
+  }
 
   const AddDressSchema = Yup.object().shape({
     dressType: Yup.string()
       .oneOf(dressTypeArr, "Please select the type")
       .required("Please select the type"),
+    skinColorField: Yup.string().required("Please select the skin color"),
     color: Yup.string()
-      .oneOf(colorArr, "Please select the color")
       .required("Please select the color"),
     file: Yup.string().required("Please attach image"),
     acc: Yup.string().required("Please attach image"),
@@ -52,6 +58,7 @@ export const AddDress = ({setsaved}) => {
     setUploadAcc(false);
     setaccImage(null);
   }
+
   return (
     <>
       <MetaData title="Home" />
@@ -60,13 +67,13 @@ export const AddDress = ({setsaved}) => {
         class2={"d-flex flex-wrap product-container card my-5"}>
         <div className="row card-body text-white bg-dark">
           <div
-            className={`col-4 d-none d-md-block ${
-              category === "trendy" ? "trendy" : "traditional"
-            }`}></div>
+            className={`col-4 d-none d-md-block ${category === "trendy" ? "trendy" : "traditional"
+              }`}></div>
           <Formik
             initialValues={{
               dressType: "",
               color: "",
+              skinColorField: "",
               file: dressImage,
               acc: accImage,
             }}
@@ -75,6 +82,7 @@ export const AddDress = ({setsaved}) => {
               const config = {
                 token: cookie.refreshToken,
               };
+              console.log(values)
               const data = new FormData();
               data.append("dressImage", dressImage);
               data.append("accImage", accImage);
@@ -108,7 +116,7 @@ export const AddDress = ({setsaved}) => {
                 },
               });
             }}>
-            {({ errors, touched, setFieldTouched, setFieldValue }) => (
+            {({ errors, touched, setFieldTouched, setFieldValue, values }) => (
               <Form className="col-12 col-md-8 d-grid px-0 px-md-5">
                 <div className="row my-4 align-items-top">
                   <div className="col-12 col-sm-6">
@@ -136,12 +144,39 @@ export const AddDress = ({setsaved}) => {
                     ) : null}
                   </div>
                 </div>
+                <div className="row my-4 align-items-top">
+                  <div className="col-12 col-sm-6">
+                    <label
+                      htmlFor="exampleFormControlInput1"
+                      className="form-label">
+                      Select the Type
+                    </label>
+                  </div>
+                  <div className="col-12 col-sm-6">
+                    <Field as="select"
+                      className="form-select"
+                      aria-label="Default select example"
+                      name="skinColorField">
+                      <option value="">select</option>
+                      <option value="light">Light</option>
+                      <option value="fair">Fair</option>
+                      <option value="medium">Medium</option>
+                      <option value="deep">Deep (dark)</option>
+                    </Field>
+                    {touched.skinColorField && errors.skinColorField ? (
+                      <div className="text-danger pt-1 position-relative">
+                        <i className="bi bi-info-circle"></i>
+                        {` ${errors.skinColorField}`}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
                 <div className="row mt-4 align-items-center">
                   <div className="col-12 col-sm-6">
                     <label
                       htmlFor="exampleFormControlInput1"
                       className="form-label">
-                      Select the color
+                      Suggested colors for you
                     </label>
                   </div>
                   <div className="col-12 col-sm-6">
@@ -151,23 +186,16 @@ export const AddDress = ({setsaved}) => {
                       aria-label="Default select example"
                       name="color">
                       <option value="">Select</option>
-                      {colorArr.map((color, index) => {
-                        return (
-                          <option value={color} key={index}>
-                            {color}
-                          </option>
-                        );
-                      })}
+                      {(values.skinColorField != "") && (
+                        colorSuggestion[values.skinColorField].map((color, index) => {
+                          return (
+                            <option value={color} key={index}>
+                              {color}
+                            </option>
+                          );
+                        }))}
                     </Field>
-                    <Field
-                      as="input"
-                      type="color"
-                      className="form-select"
-                      aria-label="Default select example"
-                      name="color"
-                      value>
-                    </Field>
-                    {touched.color && errors.color ? (
+                    {touched.color && errors.color && values.skinColorField ? (
                       <div className="text-danger pt-1">
                         <i className="bi bi-info-circle"></i>
                         {` ${errors.color}`}
