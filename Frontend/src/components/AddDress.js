@@ -149,7 +149,7 @@ export const AddDress = ({ setsaved }) => {
                     <label
                       htmlFor="exampleFormControlInput1"
                       className="form-label">
-                      Select the Type
+                      Select the Skin color
                     </label>
                   </div>
                   <div className="col-12 col-sm-6">
